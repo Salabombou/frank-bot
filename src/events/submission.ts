@@ -1,13 +1,8 @@
 import { Mutex } from 'async-mutex';
-import { type Client, Events, type Message, TextChannel } from 'discord.js';
+import { type Client, Events, type Message } from 'discord.js';
 
 import { Button } from '../enums/button.js';
-import {
-  messageIsEmpty,
-  parseSubmission,
-  removeSelfReactions,
-  submissionControls
-} from '../utils/message.js';
+import { messageIsEmpty, parseSubmission, removeSelfReactions, submissionControls } from '../utils/message.js';
 
 export default async function useSubmission(client: Client<true>) {
   const approvalChannel = await client.channels.fetch(process.env.APPROVAL_CHANNEL_ID);
@@ -19,11 +14,11 @@ export default async function useSubmission(client: Client<true>) {
   if (!approvalChannel || !sinkChannel || !nsfwChannel || !seriousChannel || !suomiChannel) {
     throw new Error('One or more channel IDs are invalid.');
   } else if (
-    !(approvalChannel instanceof TextChannel) ||
-    !(sinkChannel instanceof TextChannel) ||
-    !(nsfwChannel instanceof TextChannel) ||
-    !(seriousChannel instanceof TextChannel) ||
-    !(suomiChannel instanceof TextChannel)
+    !(approvalChannel.isTextBased() && approvalChannel.isSendable() && !approvalChannel.isDMBased()) ||
+    !(sinkChannel.isTextBased() && sinkChannel.isSendable() && !sinkChannel.isDMBased()) ||
+    !(nsfwChannel.isTextBased() && nsfwChannel.isSendable() && !nsfwChannel.isDMBased()) ||
+    !(seriousChannel.isTextBased() && seriousChannel.isSendable() && !seriousChannel.isDMBased()) ||
+    !(suomiChannel.isTextBased() && suomiChannel.isSendable() && !suomiChannel.isDMBased())
   ) {
     throw new Error('One or more channel IDs do not belong to a guild text channel.');
   }
@@ -42,8 +37,7 @@ export default async function useSubmission(client: Client<true>) {
     const submission = parseSubmission(message);
     if (!submission) {
       message.reply({
-        content:
-          'Submission failed to parse (Mayhaps you forgot to add other content than the tripcode?)'
+        content: 'Submission failed to parse (Mayhaps you forgot to add other content than the tripcode?)'
       });
       return;
     }
@@ -55,8 +49,7 @@ export default async function useSubmission(client: Client<true>) {
       })
       .catch((e) => {
         message.reply({
-          content:
-            'Submission failed to send. Try again later (Mayhaps your attachment(s) are too large?)'
+          content: 'Submission failed to send. Try again later (Mayhaps your attachment(s) are too large?)'
         });
         throw e;
       });
@@ -72,7 +65,7 @@ export default async function useSubmission(client: Client<true>) {
     const mutex = new Mutex();
 
     collector.on('collect', (interaction) => {
-      mutex.runExclusive(async () => {
+      return mutex.runExclusive(async () => {
         collector.resetTimer({
           time: 24 * 60 * 60 * 1000,
           idle: 10 * 60 * 1000
@@ -94,7 +87,7 @@ export default async function useSubmission(client: Client<true>) {
         } else if (!submittedMessage) {
           undo = true;
 
-          let submissionChannel: TextChannel;
+          let submissionChannel: typeof sinkChannel;
           switch (interaction.customId) {
             case Button.ApproveSink:
               submissionChannel = sinkChannel;

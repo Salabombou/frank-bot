@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import {
   ActionRowBuilder,
-  Attachment,
   AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -30,7 +29,7 @@ export function parseSubmission(message: Message):
       components: ActionRowBuilder<ButtonBuilder>[];
       files: (string | AttachmentBuilder)[];
     })
-  | false {
+  | null {
   const submission: ReturnType<typeof parseSubmission> = {
     components: [],
     files: []
@@ -73,7 +72,7 @@ export function parseSubmission(message: Message):
 
   submission.content = submission.content.trim();
   if (submission.content === '' && submission.files.length === 0 && !submission.poll) {
-    return false;
+    return null;
   }
 
   const timestamp = `\n<t:${Math.floor(message.createdTimestamp / 1000)}:F>`;

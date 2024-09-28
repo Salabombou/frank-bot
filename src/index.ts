@@ -39,4 +39,8 @@ client.on('ready', async () => {
   });
 });
 
+if (process.env.NODE_ENV !== 'production') {
+  logger.warn('Running in development mode. Logging all errors.');
+}
+
 client.login(process.env.BOT_TOKEN);
