@@ -27,7 +27,7 @@ export function messageIsEmpty(message: Message) {
 export function parseSubmission(message: Message):
   | (MessageCreateOptions & {
       components: ActionRowBuilder<ButtonBuilder>[];
-      files: (string | AttachmentBuilder)[];
+      files: AttachmentBuilder[];
     })
   | null {
   const submission: ReturnType<typeof parseSubmission> = {
@@ -35,8 +35,20 @@ export function parseSubmission(message: Message):
     files: []
   };
 
-  submission.files.push(...message.attachments.map((a) => a.url));
-  submission.files.push(...message.stickers.map((s) => s.url));
+  submission.files.push(
+    ...[...message.attachments, ...message.stickers].map(([, file], index) => {
+      const extension = new URL(file.url).pathname.split('.').pop();
+
+      let type: string;
+      if ('contentType' in file) {
+        type = file.contentType?.split('/')[0] ?? 'attachment';
+      } else {
+        type = 'sticker';
+      }
+
+      return new AttachmentBuilder(file.url).setName(`${type}-${index}.${extension}`);
+    })
+  );
 
   if (message.poll) {
     submission.poll = {

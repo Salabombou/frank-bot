@@ -70,25 +70,42 @@ describe('parseSubmission', () => {
   it('should parse message with attachments', () => {
     const message = {
       content: '',
-      attachments: new Collection([['1', { url: 'http://example.com' }]]),
+      attachments: new Collection([['1', { url: 'http://example.com/file', name: 'file', contentType: null }]]),
       stickers: new Collection(),
       createdTimestamp: Date.now()
     } as unknown as Message;
     const result = parseSubmission(message);
     expect(result).toBeTruthy();
-    expect(result!.files).toContain('http://example.com');
+    expect(result!.files[0]!.attachment).toBe('http://example.com/file');
+    expect(result!.files[0]!.name).toMatch('attachment-0');
+  });
+
+  it('should parse message with attachments with content type', () => {
+    const message = {
+      content: '',
+      attachments: new Collection([
+        ['1', { url: 'http://example.com/file.png', name: 'file', contentType: 'image/png' }]
+      ]),
+      stickers: new Collection(),
+      createdTimestamp: Date.now()
+    } as unknown as Message;
+    const result = parseSubmission(message);
+    expect(result).toBeTruthy();
+    expect(result!.files[0]!.attachment).toBe('http://example.com/file.png');
+    expect(result!.files[0]!.name).toMatch('image-0.png');
   });
 
   it('should parse message with stickers', () => {
     const message = {
       content: '',
       attachments: new Collection(),
-      stickers: new Collection([['1', { url: 'http://example.com' }]]),
+      stickers: new Collection([['1', { url: 'http://example.com/image.png', name: 'image' }]]),
       createdTimestamp: Date.now()
     } as unknown as Message;
     const result = parseSubmission(message);
     expect(result).toBeTruthy();
-    expect(result!.files).toContain('http://example.com');
+    expect(result!.files[0]!.attachment).toBe('http://example.com/image.png');
+    expect(result!.files[0]!.name).toMatch('sticker-0.png');
   });
 
   it('should parse message with poll', () => {
