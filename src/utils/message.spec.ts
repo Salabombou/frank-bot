@@ -70,7 +70,9 @@ describe('parseSubmission', () => {
   it('should parse message with attachments', () => {
     const message = {
       content: '',
-      attachments: new Collection([['1', { url: 'http://example.com/file', name: 'file', contentType: null }]]),
+      attachments: new Collection([
+        ['1', { url: 'http://example.com/file', name: 'file', contentType: null, description: 'this is a file' }]
+      ]),
       stickers: new Collection(),
       createdTimestamp: Date.now()
     } as unknown as Message;
@@ -78,13 +80,14 @@ describe('parseSubmission', () => {
     expect(result).toBeTruthy();
     expect(result!.files[0]!.attachment).toBe('http://example.com/file');
     expect(result!.files[0]!.name).toMatch('attachment-0');
+    expect(result!.files[0]!.description).toBe('this is a file');
   });
 
   it('should parse message with attachments with content type', () => {
     const message = {
       content: '',
       attachments: new Collection([
-        ['1', { url: 'http://example.com/file.png', name: 'file', contentType: 'image/png' }]
+        ['1', { url: 'http://example.com/file.png', name: 'file', contentType: 'image/png', description: null }]
       ]),
       stickers: new Collection(),
       createdTimestamp: Date.now()
@@ -93,6 +96,7 @@ describe('parseSubmission', () => {
     expect(result).toBeTruthy();
     expect(result!.files[0]!.attachment).toBe('http://example.com/file.png');
     expect(result!.files[0]!.name).toMatch('image-0.png');
+    expect(result!.files[0]!.description).toBeUndefined();
   });
 
   it('should parse message with stickers', () => {

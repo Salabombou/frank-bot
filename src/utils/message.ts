@@ -46,7 +46,15 @@ export function parseSubmission(message: Message):
         type = 'sticker';
       }
 
-      return new AttachmentBuilder(file.url).setName(`${type}-${index}.${extension}`);
+      const attachment = new AttachmentBuilder(file.url);
+
+      attachment.setName(`${type}-${index}.${extension}`);
+
+      if (file.description !== null) {
+        attachment.setDescription(file.description);
+      }
+
+      return attachment;
     })
   );
 
