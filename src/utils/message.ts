@@ -62,10 +62,14 @@ export function parseSubmission(message: Message):
     submission.poll = {
       question: message.poll.question,
       answers: message.poll.answers.map((a) => ({
-        text: String(a.text)
+      text: String(a.text)
       })),
       allowMultiselect: message.poll.allowMultiselect,
-      duration: Math.ceil((message.poll.expiresTimestamp - message.createdTimestamp) / 3_600_000)
+      duration: Math.ceil(
+      ((message.poll.expiresTimestamp ?? (message.createdTimestamp + 86_400_000)) -
+        message.createdTimestamp) /
+        3_600_000
+      )
     };
   }
 
