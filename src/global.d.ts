@@ -4,8 +4,8 @@ declare namespace NodeJS {
     BOT_TOKEN: string;
     APPROVAL_CHANNEL_ID: string;
     SINK_CHANNEL_ID: string;
-    NSFW_CHANNEL_ID: string;
-    SERIOUS_CHANNEL_ID: string;
-    SUOMI_CHANNEL_ID: string;
+    NSFW_CHANNEL_ID?: string;
+    SERIOUS_CHANNEL_ID?: string;
+    SUOMI_CHANNEL_ID?: string;
   }
 }

@@ -20,7 +20,7 @@ const client: Client<true> = new Client({
   partials: [Partials.Channel, Partials.Message, Partials.Reaction]
 });
 
-client.on('ready', async () => {
+client.on('clientReady', async () => {
   await client.application.fetch();
 
   await useSubmission(client);

@@ -7,20 +7,43 @@ import { messageIsEmpty, parseSubmission, removeSelfReactions, submissionControl
 export default async function useSubmission(client: Client<true>) {
   const approvalChannel = await client.channels.fetch(process.env.APPROVAL_CHANNEL_ID);
   const sinkChannel = await client.channels.fetch(process.env.SINK_CHANNEL_ID);
-  const nsfwChannel = await client.channels.fetch(process.env.NSFW_CHANNEL_ID);
-  const seriousChannel = await client.channels.fetch(process.env.SERIOUS_CHANNEL_ID);
-  const suomiChannel = await client.channels.fetch(process.env.SUOMI_CHANNEL_ID);
+  let nsfwChannel = process.env.NSFW_CHANNEL_ID
+    ? await client.channels.fetch(process.env.NSFW_CHANNEL_ID).catch(() => null)
+    : null;
+  let seriousChannel = process.env.SERIOUS_CHANNEL_ID
+    ? await client.channels.fetch(process.env.SERIOUS_CHANNEL_ID).catch(() => null)
+    : null;
+  let suomiChannel = process.env.SUOMI_CHANNEL_ID
+    ? await client.channels.fetch(process.env.SUOMI_CHANNEL_ID).catch(() => null)
+    : null;
 
-  if (!approvalChannel || !sinkChannel || !nsfwChannel || !seriousChannel || !suomiChannel) {
-    throw new Error('One or more channel IDs are invalid.');
-  } else if (
+  if (!approvalChannel || !sinkChannel) {
+    throw new Error('Approval or Sink channel IDs are invalid.');
+  }
+
+  if (
     !(approvalChannel.isTextBased() && approvalChannel.isSendable() && !approvalChannel.isDMBased()) ||
-    !(sinkChannel.isTextBased() && sinkChannel.isSendable() && !sinkChannel.isDMBased()) ||
-    !(nsfwChannel.isTextBased() && nsfwChannel.isSendable() && !nsfwChannel.isDMBased()) ||
-    !(seriousChannel.isTextBased() && seriousChannel.isSendable() && !seriousChannel.isDMBased()) ||
-    !(suomiChannel.isTextBased() && suomiChannel.isSendable() && !suomiChannel.isDMBased())
+    !(sinkChannel.isTextBased() && sinkChannel.isSendable() && !sinkChannel.isDMBased())
   ) {
-    throw new Error('One or more channel IDs do not belong to a guild text channel.');
+    throw new Error('Approval or Sink channel IDs do not belong to a valid guild text channel.');
+  }
+
+  if (nsfwChannel && !(nsfwChannel.isTextBased() && nsfwChannel.isSendable() && !nsfwChannel.isDMBased())) {
+    console.warn('NSFW channel ID is invalid or not a text channel. Disabling NSFW feature.');
+    nsfwChannel = null;
+  }
+
+  if (
+    seriousChannel &&
+    !(seriousChannel.isTextBased() && seriousChannel.isSendable() && !seriousChannel.isDMBased())
+  ) {
+    console.warn('Serious channel ID is invalid or not a text channel. Disabling Serious feature.');
+    seriousChannel = null;
+  }
+
+  if (suomiChannel && !(suomiChannel.isTextBased() && suomiChannel.isSendable() && !suomiChannel.isDMBased())) {
+    console.warn('Suomi channel ID is invalid or not a text channel. Disabling Suomi feature.');
+    suomiChannel = null;
   }
 
   client.on(Events.MessageCreate, async (message) => {
@@ -45,7 +68,14 @@ export default async function useSubmission(client: Client<true>) {
     const pendingMessage = await approvalChannel
       .send({
         ...submission,
-        components: [...submission.components, ...submissionControls()]
+        components: [
+          ...submission.components,
+          ...submissionControls(false, {
+            showNsfw: !!nsfwChannel,
+            showSerious: !!seriousChannel,
+            showSuomi: !!suomiChannel
+          })
+        ]
       })
       .catch((e) => {
         message.reply({
@@ -94,15 +124,18 @@ export default async function useSubmission(client: Client<true>) {
               reactionEmote = '✅';
               break;
             case Button.ApproveNsfw:
-              submissionChannel = nsfwChannel;
+              if (!nsfwChannel) return;
+              submissionChannel = nsfwChannel as typeof sinkChannel;
               reactionEmote = '🔞';
               break;
             case Button.ApproveSerious:
-              submissionChannel = seriousChannel;
+              if (!seriousChannel) return;
+              submissionChannel = seriousChannel as typeof sinkChannel;
               reactionEmote = '✔️';
               break;
             case Button.ApproveSuomi:
-              submissionChannel = suomiChannel;
+              if (!suomiChannel) return;
+              submissionChannel = suomiChannel as typeof sinkChannel;
               reactionEmote = '🇫🇮';
               break;
             default:
@@ -125,7 +158,14 @@ export default async function useSubmission(client: Client<true>) {
         });
 
         pendingMessage.edit({
-          components: [...submission.components, ...submissionControls(undo)]
+          components: [
+            ...submission.components,
+            ...submissionControls(undo, {
+              showNsfw: !!nsfwChannel,
+              showSerious: !!seriousChannel,
+              showSuomi: !!suomiChannel
+            })
+          ]
         });
       });
     });

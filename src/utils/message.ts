@@ -116,7 +116,14 @@ export function parseSubmission(message: Message):
   return submission;
 }
 
-export function submissionControls(undo = false) {
+export function submissionControls(
+  undo = false,
+  options: {
+    showNsfw?: boolean;
+    showSerious?: boolean;
+    showSuomi?: boolean;
+  } = {}
+) {
   const approveButton = new ButtonBuilder()
     .setCustomId(Button.ApproveSink)
     .setLabel('Approve')
@@ -147,14 +154,16 @@ export function submissionControls(undo = false) {
     .setStyle(ButtonStyle.Danger)
     .setDisabled(undo);
 
+  const buttons = [approveButton];
+
+  if (options.showNsfw) buttons.push(approveNsfwButton);
+  if (options.showSerious) buttons.push(approveSeriousButton);
+  if (options.showSuomi) buttons.push(approveSuomiButton);
+
+  buttons.push(denyButton);
+
   const components = [
-    new ActionRowBuilder<ButtonBuilder>().setComponents(
-      approveButton,
-      approveNsfwButton,
-      approveSeriousButton,
-      approveSuomiButton,
-      denyButton
-    )
+    new ActionRowBuilder<ButtonBuilder>().setComponents(buttons)
   ];
 
   if (undo) {
