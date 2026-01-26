@@ -99,6 +99,21 @@ describe('parseSubmission', () => {
     expect(result!.files[0]!.description).toBeUndefined();
   });
 
+  it('should parse message with spoiler attachments', () => {
+    const message = {
+      content: '',
+      attachments: new Collection([
+        ['1', { url: 'http://example.com/file.png', name: 'file.png', contentType: 'image/png', description: null, spoiler: true }]
+      ]),
+      stickers: new Collection(),
+      createdTimestamp: Date.now()
+    } as unknown as Message;
+    const result = parseSubmission(message);
+    expect(result).toBeTruthy();
+    expect(result!.files[0]!.attachment).toBe('http://example.com/file.png');
+    expect((result!.files[0] as any).spoiler).toBe(true);
+  });
+
   it('should parse message with stickers', () => {
     const message = {
       content: '',
@@ -172,13 +187,13 @@ describe('parseSubmission', () => {
 
 describe('submissionControls', () => {
   it('should return controls without undo button when undo is false', () => {
-    const controls = submissionControls(false);
+    const controls = submissionControls(false, { showNsfw: true, showSerious: true, showSuomi: true });
     expect(controls.length).toBe(1);
     expect(controls[0]!.components.length).toBe(5);
   });
 
   it('should return controls with undo button when undo is true', () => {
-    const controls = submissionControls(true);
+    const controls = submissionControls(true, { showNsfw: true, showSerious: true, showSuomi: true });
     expect(controls.length).toBe(2);
     expect(controls[0]!.components.length).toBe(1);
     expect(controls[1]!.components.length).toBe(5);

@@ -48,7 +48,11 @@ export function parseSubmission(message: Message):
 
       const attachment = new AttachmentBuilder(file.url);
 
-      attachment.setName(`${attachment.name?.startsWith("SPOILER_") ? "SPOILER_" : ""}${type}-${index}.${extension}`);
+      attachment.setName(`${type}-${index}.${extension}`);
+
+      if ('spoiler' in file && file.spoiler) {
+        attachment.setSpoiler(true);
+      }
 
       if (file.description !== null) {
         attachment.setDescription(file.description);
